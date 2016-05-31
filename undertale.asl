@@ -46,16 +46,6 @@ startup
 	settings.Add("20", true, "Undyne Date");
 	settings.Add("21", true, "Alphys Date");
 	settings.Add("22", true, "True Lab");
-	
-	// Specify pointers here b/c they don't need to be read all the time
-	vars.naming = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0x250, 8));
-	vars.pFlag = new MemoryWatcher<uint>(new DeepPointer("Undertale.exe", 0x2EBD78, 0x38, 0x3C, 4));
-	vars.typer = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0xF4, 8));
-	vars.exp = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0x20, 0x58));
-	vars.plot = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0x14, 4, 8));
-	vars.room = new MemoryWatcher<uint>(new IntPtr(0x0090F300));
-	vars.fivedamage = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0xC8, 8));
-	vars.msc = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0xF8, 8));
 }
 
 init
@@ -103,6 +93,35 @@ init
 		
 		return IntPtr.Zero;
 	});
+	
+	if (new DeepPointer("Undertale.exe", 0x2EBD78).Deref<uint>(game) == 5)
+	{
+		print("This version is currently unsupported.");
+		version = "1.1";
+		
+		// todo: implement 1.1
+		// base address at undertale.exe+34D638
+	}
+	else
+	{
+		version = "1.0";
+		
+		// Specify pointers here b/c they don't need to be read all the time
+		vars.naming = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0x250, 8));
+		vars.pFlag = new MemoryWatcher<uint>(new DeepPointer("Undertale.exe", 0x2EBD78, 0x38, 0x3C, 4));
+		vars.typer = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0xF4, 8));
+		vars.exp = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0x20, 0x58));
+		vars.plot = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0x14, 4, 8));
+		vars.room = new MemoryWatcher<uint>(new IntPtr(0x0090F300));
+		vars.fivedamage = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0xC8, 8));
+		vars.msc = new MemoryWatcher<double>(new DeepPointer("Undertale.exe", 0x2EBD78, 0xF8, 8));
+	}
+}
+
+update
+{
+	if (version == "1.1")
+		return false;
 }
 
 start
