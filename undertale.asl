@@ -162,9 +162,11 @@ split
 			}
 			
 			if (vars.charaCon != null)
+			{
 				vars.charaCon.Update(game);
 				if (vars.charaCon.Current == 19 || vars.charaCon.Current == 29)
 					goto nextSplit;
+			}
 			break;
 		case 0x07:
 		case 0x13:	// Napstablook
