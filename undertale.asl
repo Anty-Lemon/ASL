@@ -10,11 +10,24 @@ state("Undertale", "1.0")
 	double msc : "Undertale.exe", 0x2EBD78, 0xF8, 8;
 }
 
+state("Undertale", "1.1")
+{
+	uint naming : "Undertale.exe", 0x34D638, 0x574, 4, 0x3FC, 0x520;
+	uint pFlag : "Undertale.exe", 0x34D638, 0x28, 0x194, 4;
+	double typer : "Undertale.exe", 0x34D638, 0x158, 0x330;
+	double exp : "Undertale.exe", 0x34D638, 0x188, 0x100;
+	double plot : "Undertale.exe", 0x34D638, 0x188, 0x70;
+	uint room : "Undertale.exe", 0x59C270;
+	double fivedamage : "Undertale.exe", 0x34D638, 0x578, 0x1E0;
+	double msc : "Undertale.exe", 0x34D638, 0x1B8, 0x310;
+}
+
 startup
 {
 	refreshRate = 30;
 	
 	settings.Add("6", false, "Genocide Ending");
+	settings.SetToolTip("6", "End split currently does not work in 1.0");
 	settings.Add("12", true, "Neutral Ending");
 	settings.Add("23", false, "True Pacifist Ending");
 	
@@ -81,6 +94,7 @@ init
 	vars.FindCharaCon = (Func<IntPtr>)(() =>
 	{
 		// Finds the instance variable obj_truechara.con
+		// Only works in 1.0
 		var target = new SigScanTarget(0, "CE 86 01 00");
 		
 		foreach (var page in memory.MemoryPages())
@@ -103,22 +117,18 @@ init
 		return IntPtr.Zero;
 	});
 	
-	if (new DeepPointer("Undertale.exe", 0x2EBD78).Deref<uint>(game) == 5)
+	switch (modules.First().ModuleMemorySize)
 	{
-		print("This version is currently unsupported.");
-		version = "1.1";
-		
-		// todo: implement 1.1
-		// base address at undertale.exe+34D638
+		case 0x567000:
+			version = "1.0";
+			break;
+		case 0x5ED000:
+			version = "1.1";
+			break;
+		default:
+			print("Could not detect version.");
+			break;
 	}
-	else
-		version = "1.0";
-}
-
-update
-{
-	if (version == "1.1")
-		return false;
 }
 
 start
@@ -150,23 +160,25 @@ split
 			if (current.exp == 99999) { goto nextSplit; }
 			break;
 		case 0x06:	// Genocide ending
-			if (vars.charaCon == null)
+			if (version == "1.0")
 			{
-				if (current.typer == 104)
+				if (vars.charaCon == null)
 				{
-					var pCharaCon = vars.FindCharaCon();
-					
-					if (pCharaCon != IntPtr.Zero)
-						vars.charaCon = new MemoryWatcher<double>(pCharaCon);
+					if (current.typer == 104)
+					{
+						var pCharaCon = vars.FindCharaCon();
+						
+						if (pCharaCon != IntPtr.Zero)
+							vars.charaCon = new MemoryWatcher<double>(pCharaCon);
+					}
 				}
+				
+				if (vars.charaCon != null)
+					vars.charaCon.Update(game);
+					if (vars.charaCon.Current == 19 || vars.charaCon.Current == 29)
+						goto nextSplit;
 			}
-			
-			if (vars.charaCon != null)
-			{
-				vars.charaCon.Update(game);
-				if (vars.charaCon.Current == 19 || vars.charaCon.Current == 29)
-					goto nextSplit;
-			}
+			// todo: find a decent way to get obj_truechara.con in 1.1
 			break;
 		case 0x07:
 		case 0x13:	// Napstablook
