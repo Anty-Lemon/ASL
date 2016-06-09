@@ -1,20 +1,20 @@
 state("Undertale", "1.0")
 {
-	double naming : "Undertale.exe", 0x2EBD78, 0x250, 8;
+	double naming : "Undertale.exe", 0x50F33C, 0x80, 0xC8, 0x20, 8;
 	uint pFlag : "Undertale.exe", 0x2EBD78, 0x38, 0x3C, 4;
-	double typer : "Undertale.exe", 0x2EBD78, 0xF4, 8;
+	double charaCon : "Undertale.exe", 0x50F33C, 0x80, 0xC8, 0x3C, 8;
 	double exp : "Undertale.exe", 0x2EBD78, 0x20, 0x58;
 	double plot : "Undertale.exe", 0x2EBD78, 0x14, 4, 8;
 	uint room : "Undertale.exe", 0x50F300;
 	double fivedamage : "Undertale.exe", 0x2EBD78, 0xC8, 8;
 	double msc : "Undertale.exe", 0x2EBD78, 0xF8, 8;
+	double igt : "Undertale.exe", 0x30CF34, 0, 0x100, 4, 4, 4, 0xC, 0xB8, 8, 0xC8, 0x38, 8;
 }
 
 state("Undertale", "1.1")
 {
 	uint naming : "Undertale.exe", 0x34D638, 0x574, 4, 0x3FC, 0x520;
-	uint pFlag : "Undertale.exe", 0x34D638, 0x28, 0x194, 4;
-	double typer : "Undertale.exe", 0x34D638, 0x158, 0x330;
+	uint pFlag : "Undertale.exe", 0x34D638, 0x248, 0, 4, 4;
 	double exp : "Undertale.exe", 0x34D638, 0x188, 0x100;
 	double plot : "Undertale.exe", 0x34D638, 0x188, 0x70;
 	uint room : "Undertale.exe", 0x59C270;
@@ -27,7 +27,7 @@ startup
 	refreshRate = 30;
 	
 	settings.Add("6", false, "Genocide Ending");
-	settings.SetToolTip("6", "End split currently does not work in 1.0");
+	settings.SetToolTip("6", "End split currently does not work in 1.1");
 	settings.Add("12", true, "Neutral Ending");
 	settings.Add("23", false, "True Pacifist Ending");
 	
@@ -91,32 +91,6 @@ init
 		return memory.ReadValue<double>(new IntPtr(current.pFlag + n * 0x10));
 	});
 	
-	vars.FindCharaCon = (Func<IntPtr>)(() =>
-	{
-		// Finds the instance variable obj_truechara.con
-		// Only works in 1.0
-		var target = new SigScanTarget(0, "CE 86 01 00");
-		
-		foreach (var page in memory.MemoryPages())
-		{
-			var scanner = new SignatureScanner(game, page.BaseAddress, (int)page.RegionSize);
-
-			foreach (var ptr in scanner.ScanAll(target))
-			{
-				if (ptr != IntPtr.Zero)
-				{
-					var con = memory.ReadValue<double>(ptr - 16);
-					
-					if (con == Math.Floor(con))
-						if (con >= 0 && con < 9)
-							return ptr - 16;
-				}
-			}
-		}
-		
-		return IntPtr.Zero;
-	});
-	
 	switch (modules.First().ModuleMemorySize)
 	{
 		case 0x567000:
@@ -133,8 +107,7 @@ init
 
 start
 {
-	if (old.naming == 2)
-		return current.naming == 4 || current.naming == 5;
+	return old.naming == 2 && (current.naming == 0 || current.naming == 4);
 }
 
 split
@@ -161,23 +134,8 @@ split
 			break;
 		case 0x06:	// Genocide ending
 			if (version == "1.0")
-			{
-				if (vars.charaCon == null)
-				{
-					if (current.typer == 104)
-					{
-						var pCharaCon = vars.FindCharaCon();
-						
-						if (pCharaCon != IntPtr.Zero)
-							vars.charaCon = new MemoryWatcher<double>(pCharaCon);
-					}
-				}
-				
-				if (vars.charaCon != null)
-					vars.charaCon.Update(game);
-					if (vars.charaCon.Current == 19 || vars.charaCon.Current == 29)
-						goto nextSplit;
-			}
+				if (current.charaCon == 19 || current.charaCon == 29)
+					goto nextSplit;
 			// todo: find a decent way to get obj_truechara.con in 1.1
 			break;
 		case 0x07:
@@ -230,7 +188,7 @@ split
 			break;
 		case 0x11:
 		case 0x1E:	// Asgore
-			if (current.fivedamage >= 500) { goto nextSplit; }
+			if (current.fivedamage >= 1) { goto nextSplit; }
 			break;
 		case 0x12:
 		case 0x1F:	// Neutral ending
@@ -259,5 +217,14 @@ split
 			vars.splits.Dequeue();
 			print("Next split: 0x" + vars.splits.Peek().ToString("X"));
 			return true;
+	}
+}
+
+gameTime
+{
+	if (version == "1.0")
+	{
+		if (current.igt > old.igt)
+			return TimeSpan.FromSeconds(current.igt / 30);
 	}
 }
