@@ -17,8 +17,8 @@ startup
 {
 	timer.OnStart += (s, e) =>
 	{
-		vars.time = 0;
-		vars.lastSplit = 0;		
+		vars.time = (uint)0;
+		vars.lastSplit = (uint)0;		
 		vars.doSplit = false;
 	};
 }
