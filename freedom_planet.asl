@@ -71,7 +71,7 @@ gameTime
 			vars.doSplit = true;
 	}
 
-	newTime = vars.lastSplit + (uint)current.igt;
+	uint newTime = vars.lastSplit + (uint)current.igt;
 	
 	if (newTime > vars.time)
 		vars.time = newTime;
