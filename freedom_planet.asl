@@ -17,8 +17,8 @@ startup
 {
 	timer.OnStart += (s, e) =>
 	{
-		vars.time = (uint)0;
-		vars.lastSplit = (uint)0;		
+		vars.time = 0.d;
+		vars.lastSplit = 0.d;		
 		vars.doSplit = false;
 	};
 }
@@ -67,11 +67,12 @@ gameTime
 {
 	if (current.totalIgt > vars.lastSplit)
 	{
-			vars.lastSplit = current.totalIgt;
+			vars.lastSplit = (double)current.totalIgt;
 			vars.doSplit = true;
+			return TimeSpan.FromMilliseconds(vars.lastSplit);
 	}
 
-	uint newTime = vars.lastSplit + (uint)current.igt;
+	double newTime = vars.lastSplit + current.igt;
 	
 	if (newTime > vars.time)
 		vars.time = newTime;
