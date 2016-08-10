@@ -17,9 +17,8 @@ startup
 {
 	timer.OnStart += (s, e) =>
 	{
-		vars.stageNum = 1;
-		vars.time = TimeSpan.Zero;
-		vars.lastSplit = TimeSpan.Zero;		
+		vars.time = 0;
+		vars.lastSplit = 0;		
 		vars.doSplit = false;
 	};
 }
@@ -49,7 +48,6 @@ split
 {
 	if (vars.doSplit)
 	{
-		++vars.stageNum;
 		vars.doSplit = false;
 		return true;
 	}
@@ -67,21 +65,16 @@ isLoading
 
 gameTime
 {
-	if (current.totalIgt > vars.lastSplit.TotalMilliseconds)
+	if (current.totalIgt > vars.lastSplit)
 	{
-			vars.lastSplit = TimeSpan.FromMilliseconds(current.totalIgt);
+			vars.lastSplit = current.totalIgt;
 			vars.doSplit = true;
 	}
-	
-	TimeSpan newTime = TimeSpan.Zero;
-	
-	if (vars.stageNum > 12)
-		newTime = vars.lastSplit;
-	else
-		newTime = vars.lastSplit + TimeSpan.FromMilliseconds(Math.Floor(current.igt));
+
+	newTime = vars.lastSplit + (uint)current.igt;
 	
 	if (newTime > vars.time)
 		vars.time = newTime;
 	
-	return vars.time;
+	return TimeSpan.FromMilliseconds(vars.time);
 }
